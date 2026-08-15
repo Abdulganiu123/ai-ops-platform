@@ -1,7 +1,28 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
+*.egg-info/
+.pytest_cache/
 .env
+
+# Terraform state - never commit, can contain secrets
 *.tfstate
-*.tfstate.backup
+*.tfstate.*
 .terraform/
+crash.log
+crash.*.log
+
+# Terraform plan output - can contain secrets
+*.tfplan
+
+# Local variable files with personal or sensitive values
+terraform/secret.auto.tfvars
+terraform/bootstrap/*.tfvars
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/

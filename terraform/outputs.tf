@@ -17,3 +17,8 @@ output "log_group_name" {
   description = "CloudWatch log group holding Bedrock invocation metadata."
   value       = aws_cloudwatch_log_group.bedrock.name
 }
+
+output "ci_role_arn" {
+  description = "Set this as the AWS_CI_ROLE_ARN secret in GitHub."
+  value       = aws_iam_role.ci.arn
+}

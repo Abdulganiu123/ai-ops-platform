@@ -1,8 +1,3 @@
-variable "state_bucket_name" {
-  description = "Globally unique S3 bucket name for Terraform state."
-  type        = string
-  default     = "bucket-for-devgen-terraform-state" # Replace with your own unique bucket name
-}
 
 resource "aws_s3_bucket" "state" {
   bucket = var.state_bucket_name

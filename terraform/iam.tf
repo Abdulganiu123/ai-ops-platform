@@ -33,7 +33,7 @@ resource "aws_iam_policy" "devgen_invoke" {
       {
         Sid    = "InvokeApprovedModels"
         Effect = "Allow"
-        Action = [ "bedrock:Converse"  ]
+        Action = ["bedrock:Converse"]
         Resource = concat(
           local.foundation_model_arns,
           local.inference_profile_arns,
