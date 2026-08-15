@@ -36,6 +36,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - uses: hashicorp/setup-terraform@v3
 
       - name: Format
@@ -48,10 +52,9 @@ jobs:
           terraform validate
 
       - name: Security scan
-        uses: bridgecrewio/checkov-action@master
-        with:
-          directory: terraform
-          framework: terraform
+        run: |
+          pip install checkov==3.3.11
+          checkov -d terraform --framework terraform
 
   plan:
     name: Terraform plan
