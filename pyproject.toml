@@ -1,0 +1,23 @@
+[project]
+name = "devgen"
+version = "0.1.0"
+description = "AI-assisted DevOps file generation"
+requires-python = ">=3.10"
+dependencies = [
+    "boto3",
+    "click",
+    "pyyaml",
+]
+
+[project.scripts]
+devgen = "devgen.cli:cli"
+
+[tool.setuptools]
+packages = ["devgen"]
+
+[tool.setuptools.package-data]
+devgen = ["prompts/*.txt", "models.yaml"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
