@@ -37,7 +37,7 @@ variable "enable_vpc_endpoint" {
 variable "state_bucket_name" {
   description = "Globally unique S3 bucket name for Terraform state."
   type        = string
-  
+
 }
 
 variable "github_repo" {
