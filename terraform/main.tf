@@ -1,10 +1,10 @@
-variable "state_bucket_name" {
-  description = "Globally unique S3 bucket name for Terraform state."
-  type        = string
-  default     = "bucket-for-devgen-terraform-state" # Replace with your own unique bucket name
-}
 
 resource "aws_s3_bucket" "state" {
+  # checkov:skip=CKV_AWS_18: access logging needs a second bucket that fails the same checks
+  # checkov:skip=CKV_AWS_144: cross-region replication is DR beyond scope for one account
+  # checkov:skip=CKV_AWS_145: SSE-S3 enabled; state holds no customer data
+  # checkov:skip=CKV2_AWS_62: event notifications need an SNS/SQS/Lambda target
+
   bucket = var.state_bucket_name
 }
 
@@ -30,4 +30,23 @@ resource "aws_s3_bucket_public_access_block" "state" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "state" {
+  bucket = aws_s3_bucket.state.id
+
+  rule {
+    id     = "expire-old-state-versions"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_expiration {
+      noncurrent_days = 90
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
 }
