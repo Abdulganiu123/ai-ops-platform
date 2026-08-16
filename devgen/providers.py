@@ -16,7 +16,10 @@ from botocore.exceptions import ClientError
 GUARDRAIL_PARAM = "/devgen/guardrail"
 
 HINTS = {
-    "AccessDeniedException": "Enable the model in Bedrock console -> Model access.",
+    "AccessDeniedException": (
+        "Either the model is not enabled in Bedrock console -> Model access, "
+        "or the caller's IAM policy does not allow bedrock:InvokeModel on it."
+    ),
     "ValidationException": "Check the model id in devgen/models.yaml.",
 }
 
