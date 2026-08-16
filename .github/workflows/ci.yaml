@@ -82,19 +82,6 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Show OIDC sub claim
-        run: |
-          curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" \
-          | python3 -c "
-          import sys, json, base64
-          token = json.load(sys.stdin)['value']
-          part = token.split('.')[1]
-          part += '=' * (-len(part) % 4)
-          claims = json.loads(base64.urlsafe_b64decode(part))
-          print('SUB:', claims['sub'])
-          print('AUD:', claims['aud'])
-          "
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:

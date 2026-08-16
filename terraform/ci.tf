@@ -21,6 +21,8 @@ resource "aws_iam_role" "ci" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
+          # Immutable sub format for repos created after 2026-07-15.
+          # The numeric ids survive renames - that is the point of the format.
           "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:*"
         }
       }
