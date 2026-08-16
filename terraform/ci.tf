@@ -56,3 +56,22 @@ resource "aws_iam_role_policy_attachment" "ci_invoke" {
   role       = aws_iam_role.ci.name
   policy_arn = aws_iam_policy.devgen_invoke.arn
 }
+
+# ReadOnlyAccess omits some Bedrock read actions. Grant only what
+# terraform plan needs, scoped to our own guardrail.
+resource "aws_iam_role_policy" "ci_bedrock_read" {
+  name = "bedrock-read"
+  role = aws_iam_role.ci.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "bedrock:ListTagsForResource",
+        "bedrock:GetGuardrail",
+      ]
+      Resource = "arn:aws:bedrock:${var.region}:${local.account_id}:guardrail/*"
+    }]
+  })
+}
