@@ -78,8 +78,10 @@ class BedrockProvider(LLMProvider):
         try:
             resp = self._client.converse(**kwargs)
         except ClientError as exc:
-            code = exc.response["Error"]["Code"]
-            raise RuntimeError(f"{code}. {HINTS.get(code, '')}") from exc
+            error = exc.response["Error"]
+            code = error["Code"]
+            message = error.get("Message", "")
+            raise RuntimeError(f"{code}: {message} {HINTS.get(code, '')}".strip()) from exc
 
         if resp.get("stopReason") == "guardrail_intervened":
             raise RuntimeError("Blocked by the devgen guardrail.")
