@@ -1,9 +1,11 @@
+README.md
 pyproject.toml
 devgen/__init__.py
 devgen/audit.py
 devgen/cli.py
 devgen/config.py
 devgen/engine.py
+devgen/lambda_handler.py
 devgen/models.yaml
 devgen/providers.py
 devgen/redact.py
@@ -13,5 +15,7 @@ devgen.egg-info/dependency_links.txt
 devgen.egg-info/entry_points.txt
 devgen.egg-info/requires.txt
 devgen.egg-info/top_level.txt
+devgen/prompts/diagnose.txt
 devgen/prompts/dockerfile.txt
+tests/test_engine.py
 tests/test_redact.py

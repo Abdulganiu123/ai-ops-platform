@@ -27,3 +27,7 @@ output "bedrock_endpoint_id" {
   description = "VPC endpoint id, empty when disabled."
   value       = try(aws_vpc_endpoint.bedrock_runtime[0].id, "")
 }
+
+output "diagnose_function_name" {
+  value = aws_lambda_function.diagnose.function_name
+}

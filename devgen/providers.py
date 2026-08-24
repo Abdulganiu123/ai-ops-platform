@@ -9,6 +9,11 @@ import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+try:
+    import ollama
+except ImportError:
+    ollama = None
+
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
@@ -92,3 +97,49 @@ class BedrockProvider(LLMProvider):
             input_tokens=resp["usage"]["inputTokens"],
             output_tokens=resp["usage"]["outputTokens"],
         )   
+
+class OllamaProvider(LLMProvider):
+    """Calls a model running locally. Nothing leaves the machine."""
+
+    def __init__(self, model_id, host="http://localhost:11434"):
+        if ollama is None:
+            raise RuntimeError(
+                "The local tier needs the ollama package: pip install 'devgen[local]'"
+            )
+        self.model_id = model_id
+        self.host = host
+        self._client = ollama.Client(host=host)
+
+    def generate(self, prompt, system="", max_tokens=1024):
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        try:
+            resp = self._client.chat(
+                model=self.model_id,
+                messages=messages,
+                options={"temperature": 0.2, "num_predict": max_tokens},
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"Ollama call failed at {self.host}: {exc}. "
+                f"Check Ollama is running (ollama serve - install: https://ollama.com) "
+                f"and that '{self.model_id}' is pulled (ollama pull {self.model_id})."
+            ) from exc
+
+        return LLMResponse(
+            text=resp["message"]["content"],
+            model_id=self.model_id,
+            input_tokens=resp.get("prompt_eval_count", 0),
+            output_tokens=resp.get("eval_count", 0),
+        )
+
+def get_provider(provider_name, model_id):
+    """Build the right provider for a name from models.yaml."""
+    if provider_name == "ollama":
+        return OllamaProvider(model_id)
+    if provider_name == "bedrock":
+        return BedrockProvider(model_id)
+    raise ValueError(f"Unknown provider '{provider_name}' in models.yaml.")

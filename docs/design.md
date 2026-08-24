@@ -113,7 +113,38 @@ fix is a separate bootstrap configuration; noted rather than done.
 refreshes every managed resource, so enumerating each read action is brittle.
 The role can only read, and `apply` remains manual.
 
+**Self-reported confidence is weakly calibrated.** Given two lines of
+`OOMKilled` output, both a 1B local model and Claude Haiku 4.5 answered
+`CONFIDENCE: high` — but the log cannot distinguish an application memory
+leak from an undersized limit, so neither had grounds for it. The smaller
+model also gave Docker syntax for a Kubernetes context.
+
+The `CONFIDENCE` field is still worth having; it just reads as a hint about
+tone rather than a signal to act on. Treating it as a gate — auto-remediate
+when confidence is high — would be unsafe.
+
 ---
+
+## Two entry points, one pipeline
+
+The CLI reads from a pipe; the Lambda reads from an event. Both call the same
+`engine.run()`, so redaction, prompts, and audit behave identically. Adding the
+Lambda required no change to the pipeline itself.
+
+## CI failures use the CLI, not the Lambda
+
+GitHub Actions logs live in GitHub, not CloudWatch, so the pointer approach
+cannot reach them. CI calls `devgen diagnose` directly from the runner, which
+already has an IAM role. Shipping CI logs into CloudWatch purely to reuse the
+Lambda would be building a pipeline to fit a tool.
+
+## Guardrails against runaway cost
+
+An account-level subscription filter watches every log group in the account.
+Three controls bound the blast radius: a narrow filter pattern so healthy
+operation costs nothing, `reserved_concurrent_executions = 2` so a log storm
+cannot spawn parallel invocations, and an exclusion list so the delivery path
+cannot trigger itself.
 
 # A note on AI-assisted debugging
 

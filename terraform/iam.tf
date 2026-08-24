@@ -6,10 +6,11 @@ locals {
   # Single source of truth: the app's own tier config.
   devgen_config = yamldecode(file("${path.module}/../devgen/models.yaml"))
 
-  # Every model any tier can reach, with any inference-profile prefix removed.
+  # Only bedrock-backed tiers get IAM permissions. Local models need none.
   approved_models = distinct([
     for tier in local.devgen_config.tiers :
     trimprefix(tier.model, "us.")
+    if tier.provider == "bedrock"
   ])
 
   foundation_model_arns = [

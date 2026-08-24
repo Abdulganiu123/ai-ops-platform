@@ -5,7 +5,7 @@ generating infrastructure files and triaging failures; the platform enforces
 credential redaction, model approval, cost control, and an audit trail — all
 provisioned as code.
 
-[![CI](https://github.com/Abdulganiu123/ai-ops-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Abdulganiu123/ai-ops-platform/actions/workflows/ci.yml)
+[![CI](https://github.com/Abdulganiu123/ai-ops-platform/actions/workflows/ci.yaml/badge.svg)](https://github.com/Abdulganiu123/ai-ops-platform/actions/workflows/ci.yaml)
 
 ## Why this exists
 
@@ -63,6 +63,18 @@ Terraform writes the Guardrail id to SSM. The CLI reads it at startup, so no
 resource id is hardcoded — recreate the infrastructure and the tool picks up the
 new id with no code change.
 
+### Optional: the local tier
+
+`--tier local` runs the model on your own machine, so nothing leaves the
+network. It requires [Ollama](https://ollama.com) and the model pulled:
+
+```bash
+ollama pull gpt-oss:20b     # ~14GB, needs 16GB RAM
+```
+
+The model is set in `devgen/models.yaml`. Expect noticeably weaker output than
+the hosted tiers — the tradeoff is privacy, not quality.
+
 ## Usage
 
 ```bash
@@ -82,6 +94,14 @@ Measured cost per generated Dockerfile: **$0.000026** on `fast` versus
 **$0.000747** on `best` — a 29x spread for identical work, which is the whole
 argument for routing by task complexity.
 
+## Phase2-Usage
+
+Diagnosis also runs unattended. An account-level CloudWatch subscription filter
+sends any log line matching `ERROR`, `Exception`, or `FATAL` to a Lambda, which
+diagnoses it and notifies via SNS — no human involved. It stays silent when the
+verdict is `NO FAILURE`, so a broad filter degrades to silence rather than noise.
+
+
 ## Documentation
 
 - [Design decisions](docs/design.md) — why it is built this way, and what it cannot do
@@ -93,7 +113,7 @@ argument for routing by task complexity.
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Governed generation and diagnosis | Done |
-| 2 | Event-triggered Lambda, local model for sensitive logs, VPC endpoint | |
+| 2 | Event-triggered Lambda, local model for sensitive logs, VPC endpoint | Done |
 | 3 | RAG over runbooks and past incidents | |
 | 4 | MCP for live infrastructure state | |
 | 5 | Org-wide gateway: budgets, allowlists, central audit | |

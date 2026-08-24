@@ -57,3 +57,21 @@ variable "private_subnet_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "enable_account_filter" {
+  description = "Watch every log group in the account for errors."
+  type        = bool
+  default     = false
+}
+
+variable "excluded_log_groups" {
+  description = "Log groups the filter must skip, to prevent recursion."
+  type        = list(string)
+  default     = ["/aws/bedrock/devgen"]
+}
+
+variable "filter_pattern" {
+  description = "Which log lines fire the Lambda. Keep narrow."
+  type        = string
+  default     = "?ERROR ?Exception ?FATAL"
+}

@@ -7,6 +7,7 @@ Classify the failure:
 - REAL BUG: code or configuration is genuinely broken
 - FLAKY: transient, would likely pass on a re-run
 - INFRA: the environment, network, or a dependency failed
+- NO FAILURE: the log shows normal operation, nothing to diagnose
 
 Answer in this format, under 250 words:
 
@@ -23,3 +24,5 @@ Rules:
 - Do not suggest checking permissions unless the log shows a permission error.
 - If the log is not enough to be sure, say CONFIDENCE: low and name the one
   command or log that would settle it.
+- If the log contains no error, exception, or failure, answer
+  VERDICT: NO FAILURE and stop. Do not invent a problem.

@@ -9,7 +9,7 @@ import getpass
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-
+import os
 from devgen import config
 
 LOG_FILE = Path.home() / ".devgen" / "audit.log"
@@ -41,6 +41,11 @@ def record(command, model_id, input_tokens, output_tokens, redactions=0, status=
         "cost_usd": estimate_cost(model_id, input_tokens, output_tokens),
         "redactions": redactions,
     }
+
+    if os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        # In Lambda, stdout is collected by CloudWatch Logs.
+        print(json.dumps(event))
+        return event
 
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     with LOG_FILE.open("a") as f:
