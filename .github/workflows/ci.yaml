@@ -62,6 +62,14 @@ jobs:
 
       - name: Format
         run: terraform fmt -check -recursive
+      
+      - name: Package Lambda
+        run: make package
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Validate
         working-directory: terraform
@@ -91,6 +99,14 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Package Lambda
+        run: make package
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Plan
         working-directory: terraform
