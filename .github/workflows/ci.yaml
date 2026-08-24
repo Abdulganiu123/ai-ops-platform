@@ -66,11 +66,6 @@ jobs:
       - name: Package Lambda
         run: make package
 
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
       - name: Validate
         working-directory: terraform
         run: |
@@ -102,11 +97,6 @@ jobs:
 
       - name: Package Lambda
         run: make package
-
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
 
       - name: Plan
         working-directory: terraform
