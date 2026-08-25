@@ -109,6 +109,3 @@ resource "aws_lambda_function" "diagnose" {
   }
 }
 
-output "diagnose_function_name" {
-  value = aws_lambda_function.diagnose.function_name
-}
