@@ -1,25 +1,33 @@
 # Tiers are what engineers choose. The platform team owns what backs them.
-# A 'model' value can be a model id or an inference profile id/ARN.
 
 tiers:
   fast:
+    provider: bedrock
     model: amazon.nova-micro-v1:0
     description: Cheapest and quickest. Routine, well-known patterns.
 
   balanced:
+    provider: bedrock
     model: amazon.nova-lite-v1:0
     description: Better reasoning at low cost. Most day-to-day work.
 
   best:
+    provider: bedrock
     model: us.anthropic.claude-haiku-4-5-20251001-v1:0
     description: Highest quality. Production configs and troubleshooting.
 
+  local:
+    provider: ollama
+    model: llama3.2:1b
+    description: Runs on this machine. Nothing leaves the network.
+
 command_tiers:
   dockerfile: fast
-  diagnose: balanced
+  diagnose: best
 
 fallback_tier: fast
 
+# USD per million tokens. Local models have no per-call cost.
 pricing:
   amazon.nova-micro-v1:0:
     input_per_million: 0.035

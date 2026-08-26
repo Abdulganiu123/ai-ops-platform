@@ -29,17 +29,6 @@ variable "log_retention_days" {
 }
 
 
-variable "state_bucket_name" {
-  description = "Globally unique S3 bucket name for Terraform state."
-  type        = string
-
-}
-
-variable "github_repo" {
-  description = "Repo allowed to assume the CI role, as owner/name."
-  type        = string
-}
-
 variable "enable_vpc_endpoint" {
   description = "Create a PrivateLink endpoint for bedrock-runtime. Costs ~$7/month per AZ."
   type        = bool
@@ -56,4 +45,22 @@ variable "private_subnet_ids" {
   description = "Private subnets for the endpoint's network interfaces."
   type        = list(string)
   default     = []
+}
+
+variable "enable_account_filter" {
+  description = "Watch every log group in the account for errors."
+  type        = bool
+  default     = false
+}
+
+variable "excluded_log_groups" {
+  description = "Log groups the filter must skip, to prevent recursion."
+  type        = list(string)
+  default     = ["/aws/bedrock/devgen"]
+}
+
+variable "filter_pattern" {
+  description = "Which log lines fire the Lambda. Keep narrow."
+  type        = string
+  default     = "?ERROR ?Exception ?FATAL"
 }

@@ -1,11 +1,15 @@
-
 resource "aws_s3_bucket" "state" {
   # checkov:skip=CKV_AWS_18: access logging needs a second bucket that fails the same checks
   # checkov:skip=CKV_AWS_144: cross-region replication is DR beyond scope for one account
   # checkov:skip=CKV_AWS_145: SSE-S3 enabled; state holds no customer data
   # checkov:skip=CKV2_AWS_62: event notifications need an SNS/SQS/Lambda target
-
   bucket = var.state_bucket_name
+
+  # The whole point of this restructure. Refuses to delete even if someone
+  # runs destroy in this directory.
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_versioning" "state" {

@@ -1,3 +1,6 @@
 boto3
 click
 pyyaml
+
+[local]
+ollama>=0.6

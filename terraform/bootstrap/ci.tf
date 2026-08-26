@@ -1,10 +1,8 @@
+data "aws_caller_identity" "current" {}
+
+# Account-level, shared with other projects. We read it, we do not own it.
 data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
-}
-
-locals {
-  # Must match the bucket in backend.tf.
-  state_bucket = var.state_bucket_name
 }
 
 resource "aws_iam_role" "ci" {
@@ -21,16 +19,18 @@ resource "aws_iam_role" "ci" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
-          # Immutable sub format for repos created after 2026-07-15.
-          # The numeric ids survive renames - that is the point of the format.
           "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:*"
         }
       }
     }]
   })
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-# terraform plan reads existing resources across many services.
+# terraform plan refreshes every managed resource across many services.
 resource "aws_iam_role_policy_attachment" "ci_readonly" {
   role       = aws_iam_role.ci.name
   policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
@@ -46,19 +46,12 @@ resource "aws_iam_role_policy" "ci_state" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["s3:PutObject", "s3:DeleteObject"]
-      Resource = "arn:aws:s3:::${local.state_bucket}/devgen/*"
+      Resource = "${aws_s3_bucket.state.arn}/*"
     }]
   })
 }
 
-# Same policy engineers get: only the models in models.yaml.
-resource "aws_iam_role_policy_attachment" "ci_invoke" {
-  role       = aws_iam_role.ci.name
-  policy_arn = aws_iam_policy.devgen_invoke.arn
-}
-
-# ReadOnlyAccess omits some Bedrock read actions. Grant only what
-# terraform plan needs, scoped to our own guardrail.
+# ReadOnlyAccess omits some Bedrock read actions that plan needs.
 resource "aws_iam_role_policy" "ci_bedrock_read" {
   name = "bedrock-read"
   role = aws_iam_role.ci.id
@@ -71,7 +64,7 @@ resource "aws_iam_role_policy" "ci_bedrock_read" {
         "bedrock:ListTagsForResource",
         "bedrock:GetGuardrail",
       ]
-      Resource = "arn:aws:bedrock:${var.region}:${local.account_id}:guardrail/*"
+      Resource = "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:guardrail/*"
     }]
   })
 }

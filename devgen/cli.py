@@ -9,7 +9,7 @@ import click
 
 from devgen import config
 from devgen.engine import run
-from devgen.providers import BedrockProvider
+from devgen.providers import get_provider
 import subprocess
 import sys
 
@@ -23,14 +23,10 @@ CONTEXT_SETTINGS = {
 
 
 def execute(command, user_input, tier, model, debug):
-    """
-    Resolve the model, run the request, return the text.
-
-    Turns expected failures into a clean one-line error unless --debug is set.
-    """
+    """Resolve the provider, run the request, return the text."""
     try:
-        model_id = config.resolve(command, tier, model)
-        provider = BedrockProvider(model_id)
+        provider_name, model_id = config.resolve(command, tier, model)
+        provider = get_provider(provider_name, model_id)
         return run(command, provider, user_input)
     except Exception as exc:
         if debug:
@@ -98,9 +94,9 @@ def dockerfile(lang, tier, model, debug):
 @cli.command()
 def tiers():
     """Show the available quality tiers."""
-    for name, model_id, description in config.all_tiers():
+    for name, provider, model_id, description in config.all_tiers():
         click.echo(f"{name:10} {description}")
-        click.echo(f"{'':10} -> {model_id}")
+        click.echo(f"{'':10} -> {provider}: {model_id}")
 
 
 if __name__ == "__main__":

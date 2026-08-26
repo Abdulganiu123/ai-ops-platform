@@ -6,3 +6,5 @@ Requires-Python: >=3.10
 Requires-Dist: boto3
 Requires-Dist: click
 Requires-Dist: pyyaml
+Provides-Extra: local
+Requires-Dist: ollama>=0.6; extra == "local"

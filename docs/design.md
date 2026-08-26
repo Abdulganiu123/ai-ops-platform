@@ -81,47 +81,33 @@ passing. Redaction's own tests cannot detect that redaction is no longer being
 
 ---
 
-# Known limitations
-
-**Diagnosis quality has a real ceiling.** Given a Terraform state-lock failure,
-the tool correctly identified the verdict and cause, then recommended checking
-bucket permissions — wrong, because `PreconditionFailed` is not a permissions
-error. Treat output as a fast first draft. The prompt now requires quoting the
-specific error line and stating a confidence level, which is prompt engineering
-driven by an observed failure.
-
-**No institutional memory yet.** The tool reasons from training data and
-whatever you pipe in. It cannot answer "have we seen this before?" — that is
-Phase 3.
-
-**Log analysis fails when the log omits the relevant values.** See
-[the OIDC incident](incidents/2026-08-oidc-trust-mismatch.md): an authentication
-failure no amount of log analysis could resolve, because neither side of the
-compared values appeared in the log. That class of problem needs live state
-access, not better retrieval.
-
-**No VPC endpoint.** PrivateLink for `bedrock-runtime` only affects traffic
-originating inside the VPC. While `devgen` runs from a laptop or a GitHub-hosted
-runner it would cost roughly $15/month and change nothing. It becomes relevant
-in Phase 2, when the diagnose path runs as a Lambda inside the VPC.
-
-**The state bucket is managed by the state that lives inside it.** Functional,
-but `terraform destroy` cannot cleanly sequence its own state store. The standard
-fix is a separate bootstrap configuration; noted rather than done.
-
-**`ReadOnlyAccess` on the CI role is broader than ideal.** `terraform plan`
-refreshes every managed resource, so enumerating each read action is brittle.
-The role can only read, and `apply` remains manual.
-
 ---
 
-# A note on AI-assisted debugging
+## Two entry points, one pipeline
 
-Two failures during this build were diagnosed with AI assistance. In both cases
-the suggestion correctly identified *where* to look and proposed a fix that would
-have quietly widened the security posture — a wildcard resource ARN in place of a
-scoped one, and a trust condition that would have broken pull-request runs.
+The CLI reads from a pipe; the Lambda reads from an event. Both call the same
+`engine.run()`, so redaction, prompts, and audit behave identically. Adding the
+Lambda required no change to the pipeline itself.
 
-The pattern is consistent: strong at locating the problem, weak at choosing the
-constraint. That is not an argument against the tooling. It is the argument for
-the human review step this repository is built around.
+
+## Guardrails against runaway cost
+
+An account-level subscription filter watches every log group in the account.
+Three controls bound the blast radius: a narrow filter pattern so healthy
+operation costs nothing, `reserved_concurrent_executions = 2` so a log storm
+cannot spawn parallel invocations, and an exclusion list so the delivery path
+cannot trigger itself.
+
+## Bootstrap tier is separate
+
+`terraform/bootstrap/` holds the state bucket and the CI role, applied once by
+a human with local state. The application configuration in `terraform/` holds
+everything else and is destroyed and recreated freely.
+
+The CI role is not application infrastructure — it is the credential that lets
+automation exist. Keeping it in a configuration destroyed nightly meant routine
+teardown silently broke the pipeline. The application config now looks the role
+up with a `data` block and attaches only the policies it owns, so `destroy`
+removes the attachment and never the role.
+
+Both the bucket and the role carry `prevent_destroy`.

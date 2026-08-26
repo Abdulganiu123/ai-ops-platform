@@ -9,6 +9,9 @@ dependencies = [
     "pyyaml",
 ]
 
+[project.optional-dependencies]
+local = ["ollama>=0.6"]
+
 [project.scripts]
 devgen = "devgen.cli:cli"
 
