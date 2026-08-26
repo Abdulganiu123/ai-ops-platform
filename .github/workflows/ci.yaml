@@ -87,7 +87,11 @@ jobs:
       - name: Format
         run: terraform fmt -check -recursive
 
-      # -backend=false means no AWS access and no Lambda zip are needed.
+      # validate evaluates filebase64sha256() in lambda.tf, so the zip
+      # must exist even though this job never touches AWS.
+      - name: Package Lambda
+        run: make package
+
       - name: Validate
         working-directory: terraform
         run: |
