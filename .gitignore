@@ -12,6 +12,9 @@ __pycache__/
 .terraform/
 crash.log
 crash.*.log
+terraform/bootstrap/.terraform/
+terraform/bootstrap/*.tfstate
+terraform/bootstrap/*.tfstate.*
 
 # Terraform plan output - can contain secrets
 *.tfplan

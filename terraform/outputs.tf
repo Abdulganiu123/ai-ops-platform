@@ -18,10 +18,7 @@ output "log_group_name" {
   value       = aws_cloudwatch_log_group.bedrock.name
 }
 
-output "ci_role_arn" {
-  description = "Set this as the AWS_CI_ROLE_ARN secret in GitHub."
-  value       = aws_iam_role.ci.arn
-}
+
 
 output "bedrock_endpoint_id" {
   description = "VPC endpoint id, empty when disabled."

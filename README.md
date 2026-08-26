@@ -107,6 +107,8 @@ verdict is `NO FAILURE`, so a broad filter degrades to silence rather than noise
 - [Design decisions](docs/design.md) — why it is built this way, and what it cannot do
 - [Security model](docs/security.md) — the four controls, and what is deliberately not logged
 - [Incidents](docs/incidents/) — postmortems, which also seed the Phase 3 knowledge base
+- [Tool-limitations](docs/limitations.md) - Tool limitations
+- [Scope](docs/scope-boundary.md) - what it deliberately does not cover, and why
 
 ## Roadmap
 

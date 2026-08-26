@@ -29,17 +29,6 @@ variable "log_retention_days" {
 }
 
 
-variable "state_bucket_name" {
-  description = "Globally unique S3 bucket name for Terraform state."
-  type        = string
-
-}
-
-variable "github_repo" {
-  description = "Repo allowed to assume the CI role, as owner/name."
-  type        = string
-}
-
 variable "enable_vpc_endpoint" {
   description = "Create a PrivateLink endpoint for bedrock-runtime. Costs ~$7/month per AZ."
   type        = bool
