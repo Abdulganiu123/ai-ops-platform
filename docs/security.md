@@ -111,3 +111,27 @@ itself using its own IAM role, so the raw payload never crosses a new boundary.
 
 
 **Roles/Policies Layered Approach:** The apply role uses service-level wildcards because enumerating actions for Terraform is brittle — AWS has 17,000+ actions and SDKs call ones you don't expect. Instead I layered: a permissions boundary caps what the role can ever do, explicit denies block privilege escalation and state destruction, and an environment approval gate means no apply runs unattended. The refinement path is Access Analyzer generating a policy from CloudTrail after enough real applies — then use the least-privilege policies from ~90 days of activity, commit that policy to Git, and use it for the production "Operations role."
+
+## On the number of Checkov suppressions
+
+Fourteen of the suppressions sit on two IAM policies in `terraform/bootstrap/`.
+That count reflects two decisions, not fourteen: seven Checkov IAM checks
+(CKV_AWS_286-290, 355, CKV2_AWS_40) all evaluate the same property — wildcard
+actions with `Resource = "*"` — so one policy produces seven findings.
+
+Seven of them are also a category error. `ci_boundary` is a permissions
+boundary: its Allow statements define a ceiling and grant nothing. Checkov
+evaluates every `aws_iam_policy` as an identity policy, so it reports the
+boundary as permitting privilege escalation when that policy is what prevents
+it.
+
+The one real trade-off is `ci_apply`. Enumerating individual actions for a
+Terraform apply role is impractical — AWS exposes 17,000+ IAM actions and SDKs
+call ones you would not predict — so it is constrained by other layers instead:
+a permissions boundary, explicit denies on self-modification and state deletion,
+`prevent_destroy`, and an environment approval gate on every apply. Explicit
+Deny wins in IAM, so the boundary holds even against `iam:*`.
+
+Narrowing it properly is empirical: run the role, let CloudTrail observe it,
+then generate a policy with IAM Access Analyzer. Deferred until there are enough
+real applies to be representative.
