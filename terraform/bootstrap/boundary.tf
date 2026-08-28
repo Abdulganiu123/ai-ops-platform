@@ -1,7 +1,7 @@
 locals {
   # Built as strings rather than referenced, to avoid a dependency cycle:
   # the role needs the boundary, and the boundary refers to the role.
-  ci_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-ci"
+  ci_role_arn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-ci"
   boundary_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.project_name}-ci-boundary"
 }
 
@@ -33,7 +33,7 @@ resource "aws_iam_policy" "ci_boundary" {
         Action   = ["iam:CreateRole", "iam:PutRolePermissionsBoundary"]
         Resource = "*"
         Condition = {
-                    StringNotEquals = {
+          StringNotEquals = {
             "iam:PermissionsBoundary" = local.boundary_arn
           }
         }
