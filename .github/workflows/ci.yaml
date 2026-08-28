@@ -17,8 +17,6 @@ env:
   CHECKOV_VERSION: "3.3.11"
   TERRAFORM_VERSION: "1.15.8"
   PYTHON_VERSION: "3.12"
-  # Terraform writes downloaded providers here instead of into each
-  # .terraform directory, so one cache serves every job.
   TF_PLUGIN_CACHE_DIR: /home/runner/.terraform.d/plugin-cache
 
 jobs:
@@ -87,8 +85,8 @@ jobs:
       - name: Format
         run: terraform fmt -check -recursive
 
-      # validate evaluates filebase64sha256() in lambda.tf, so the zip
-      # must exist even though this job never touches AWS.
+      # validate evaluates filebase64sha256() in lambda.tf, so the zip must
+      # exist even though this job never touches AWS.
       - name: Package Lambda
         run: make package
 
@@ -107,7 +105,6 @@ jobs:
     name: Terraform plan
     runs-on: ubuntu-latest
     needs: [test, terraform]
-    if: github.event_name == 'pull_request'
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -125,8 +122,6 @@ jobs:
             pip-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-
             pip-${{ runner.os }}-
 
-      # Build before assuming the role. Packaging needs no AWS access, and
-      # there is no reason to hold a session open while pip downloads.
       - name: Package Lambda
         run: make package
 
@@ -146,24 +141,22 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-          # Default is 12 retries, which buries the real error under a wall
-          # of identical lines. Two is enough for a transient blip.
+          # Default is 12 retries, which buries the real error.
           retry-max-attempts: 2
           action-timeout-s: 60
 
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
+          # The wrapper interferes with saved plan files.
+          terraform_wrapper: false
 
       - name: Plan
         working-directory: terraform
         run: |
           terraform init
-          terraform plan -no-color | tee plan.txt
+          terraform plan -out=tfplan -input=false -no-color | tee plan.txt
 
-      # if: success() rather than always(). A cleanup step that fails because
-      # an earlier step failed becomes the last and loudest line in the log,
-      # burying the real cause.
       - name: Post plan to summary
         if: success()
         working-directory: terraform
@@ -171,15 +164,62 @@ jobs:
           {
             echo '## Terraform plan'
             echo '```'
-            tail -50 plan.txt
+            tail -60 plan.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # The apply job applies THIS plan, not a fresh one. Approving a plan
+      # and then applying a different one is the failure this prevents.
+      # Plans can contain sensitive values, so retention is short.
+      - name: Upload plan
+        if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: |
+            terraform/tfplan
+            build/devgen-lambda.zip
+          retention-days: 1
+
+  apply:
+    name: Terraform apply
+    runs-on: ubuntu-latest
+    needs: plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # Pauses here until a reviewer approves in the GitHub UI.
+    environment: production
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          retry-max-attempts: 2
+          action-timeout-s: 60
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Apply
+        working-directory: terraform
+        run: |
+          terraform init
+          terraform apply -input=false tfplan
 
   smoke:
     name: Bedrock smoke test
     runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/main'
+    needs: apply
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4

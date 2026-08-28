@@ -108,3 +108,6 @@ which is out of scope.
 function. The mitigation is architectural rather than another redaction layer —
 callers pass a pointer (log group, job id) and the function fetches the logs
 itself using its own IAM role, so the raw payload never crosses a new boundary.
+
+
+**Roles/Policies Layered Approach:** The apply role uses service-level wildcards because enumerating actions for Terraform is brittle — AWS has 17,000+ actions and SDKs call ones you don't expect. Instead I layered: a permissions boundary caps what the role can ever do, explicit denies block privilege escalation and state destruction, and an environment approval gate means no apply runs unattended. The refinement path is Access Analyzer generating a policy from CloudTrail after enough real applies — then use the least-privilege policies from ~90 days of activity, commit that policy to Git, and use it for the production "Operations role."
