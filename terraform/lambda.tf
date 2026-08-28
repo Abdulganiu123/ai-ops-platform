@@ -18,7 +18,7 @@ resource "aws_sqs_queue" "diagnose_dlq" {
 }
 
 resource "aws_iam_role" "diagnose" {
-  name = "${var.project_name}-diagnose"
+  name                 = "${var.project_name}-diagnose"
   permissions_boundary = "arn:aws:iam::${local.account_id}:policy/${var.project_name}-ci-boundary"
 
   assume_role_policy = jsonencode({
