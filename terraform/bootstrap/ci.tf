@@ -6,7 +6,8 @@ data "aws_iam_openid_connect_provider" "github" {
 }
 
 resource "aws_iam_role" "ci" {
-  name = "${var.project_name}-ci"
+  name                 = "${var.project_name}-ci"
+  permissions_boundary = aws_iam_policy.ci_boundary.arn
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -65,6 +66,35 @@ resource "aws_iam_role_policy" "ci_bedrock_read" {
         "bedrock:GetGuardrail",
       ]
       Resource = "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:guardrail/*"
+    }]
+  })
+}
+
+# Applying requires write access to every service this project provisions.
+# Scoped by service rather than by action: enumerating individual actions is
+# brittle and breaks whenever a resource type is added. The approval gate on
+# the production environment is the compensating control.
+resource "aws_iam_role_policy" "ci_apply" {
+  name = "terraform-apply"
+  role = aws_iam_role.ci.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "iam:*",
+        "lambda:*",
+        "kms:*",
+        "sns:*",
+        "sqs:*",
+        "bedrock:*",
+        "logs:*",
+        "ssm:*",
+        "budgets:*",
+        "s3:*",
+      ]
+      Resource = "*"
     }]
   })
 }
