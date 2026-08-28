@@ -63,7 +63,8 @@ resource "aws_cloudwatch_log_group" "bedrock" {
 }
 
 resource "aws_iam_role" "bedrock_logging" {
-  name = "${var.project_name}-bedrock-logging"
+  name                 = "${var.project_name}-bedrock-logging"
+  permissions_boundary = "arn:aws:iam::${local.account_id}:policy/${var.project_name}-ci-boundary"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
