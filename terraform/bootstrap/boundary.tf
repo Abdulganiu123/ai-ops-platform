@@ -9,6 +9,18 @@ locals {
 # A ceiling on what the CI role can ever do, regardless of what policies
 # are attached to it. The inline apply policy grants; this constrains.
 resource "aws_iam_policy" "ci_boundary" {
+  # This is a permissions BOUNDARY, not an identity policy. Attached via
+  # permissions_boundary, its Allow statements define a ceiling and grant
+  # nothing. Checkov evaluates every aws_iam_policy as if it were granting,
+  # so these findings invert the resource's actual purpose - this policy is
+  # what prevents privilege escalation.
+  # checkov:skip=CKV_AWS_286: this policy denies privilege escalation, it does not permit it
+  # checkov:skip=CKV_AWS_287: boundary caps credential actions rather than granting them
+  # checkov:skip=CKV_AWS_288: single-account project; DenyAccountLevelChanges blocks org access
+  # checkov:skip=CKV_AWS_289: DenySelfModification is the constraint this check asks for
+  # checkov:skip=CKV_AWS_290: a ceiling grants no write access on its own
+  # checkov:skip=CKV_AWS_355: a boundary must cover services generally to function as a ceiling
+  # checkov:skip=CKV2_AWS_40: iam:* here is the maximum permitted, narrowed by the Deny statements below
   name        = "${var.project_name}-ci-boundary"
   description = "Maximum permissions the CI role can ever hold."
 
