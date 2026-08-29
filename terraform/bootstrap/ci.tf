@@ -75,13 +75,6 @@ resource "aws_iam_role_policy" "ci_bedrock_read" {
 # brittle and breaks whenever a resource type is added. The approval gate on
 # the production environment is the compensating control.
 resource "aws_iam_role_policy" "ci_apply" {
-  # Terraform apply is a high-privilege workload. Enumerating individual
-  # actions is brittle: AWS exposes 17,000+ IAM actions and SDKs call ones
-  # you would not predict. Constrained instead by three other layers -
-  # the ci_boundary permissions boundary, explicit denies on self-modification
-  # and state deletion, and an environment approval gate on every apply.
-  # Refinement path: IAM Access Analyzer policy generation from CloudTrail
-  # once enough real applies have been observed. See docs/security.md.
   # checkov:skip=CKV_AWS_286: constrained by permissions boundary, which denies unbounded role creation
   # checkov:skip=CKV_AWS_287: no credential-exposure actions granted; sts is capped by the boundary
   # checkov:skip=CKV_AWS_288: single-account project with no cross-account trust
@@ -110,5 +103,33 @@ resource "aws_iam_role_policy" "ci_apply" {
       ]
       Resource = "*"
     }]
+  })
+}
+
+# Bedrock invoke permissions for the smoke test. Defined here rather than in
+# the application config so CI never modifies the role it authenticates as.
+resource "aws_iam_role_policy" "ci_invoke_bedrock" {
+  name = "bedrock-invoke"
+  role = aws_iam_role.ci.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["bedrock:InvokeModel", "bedrock:Converse"]
+        Resource = "arn:aws:bedrock:*::foundation-model/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "bedrock:ApplyGuardrail"
+        Resource = "arn:aws:bedrock:${var.region}:${data.aws_caller_identity.current.account_id}:guardrail/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "ssm:GetParameter"
+        Resource = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/*"
+      },
+    ]
   })
 }

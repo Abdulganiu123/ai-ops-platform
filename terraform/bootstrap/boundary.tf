@@ -51,29 +51,19 @@ resource "aws_iam_policy" "ci_boundary" {
         }
       },
       {
-        # CI must not be able to remove its ceiling or delete itself.
-        Sid    = "DenySelfDestruction"
+        # CI must never modify the role it authenticates as. All of that
+        # role's permissions are defined in bootstrap and applied by a human.
+        Sid    = "DenySelfModification"
         Effect = "Deny"
         Action = [
           "iam:DeleteRolePermissionsBoundary",
           "iam:DeleteRole",
           "iam:UpdateAssumeRolePolicy",
           "iam:PutRolePolicy",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
         ]
         Resource = local.ci_role_arn
-      },
-      {
-        # Attaching to the CI role is allowed, but only policies this project
-        # owns. Blocks attaching AdministratorAccess or any AWS managed policy.
-        Sid      = "DenyAttachingForeignPolicies"
-        Effect   = "Deny"
-        Action   = ["iam:AttachRolePolicy"]
-        Resource = local.ci_role_arn
-        Condition = {
-          ArnNotLike = {
-            "iam:PolicyARN" = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.project_name}-*"
-          }
-        }
       },
       {
         Sid      = "DenyStateBucketDeletion"
