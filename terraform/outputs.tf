@@ -28,3 +28,7 @@ output "bedrock_endpoint_id" {
 output "diagnose_function_name" {
   value = aws_lambda_function.diagnose.function_name
 }
+
+output "knowledge_bucket" {
+  value = aws_s3_bucket.knowledge.id
+}

@@ -58,4 +58,24 @@ The pattern is consistent: strong at locating the problem, weak at choosing the
 constraint. That is not an argument against the tooling. It is the argument for
 the human review step this repository is built around.
 
+
+## The filter pattern bounds what the tool can see
+
+Diagnosis is triggered by a CloudWatch subscription filter matching `ERROR`,
+`Exception`, or `FATAL`. Failures that do not use those words are invisible to
+it, and many Kubernetes failures do not: `CrashLoopBackOff`, `OOMKilled`,
+`ImagePullBackOff`, `FailedScheduling`, `Evicted`, and readiness probe failures
+all describe real outages without containing any of the three keywords.
+
+This was found by testing a crash-looping pod log against the filter. It
+produced no invocation, which was correct behaviour and the wrong outcome.
+
+Widening the pattern helps but does not solve it — the list of failure phrases
+is open-ended, and every added keyword increases invocation cost.
+
+The structural fix is to trigger from signals rather than text. A CloudWatch
+alarm on restart count or error rate fires because a metric moved, independent
+of log wording, and the same function can then fetch and diagnose the relevant
+logs. Keyword matching is a reasonable first pass; it is not a monitoring
+strategy.
 ---

@@ -5,6 +5,7 @@ devgen/audit.py
 devgen/cli.py
 devgen/config.py
 devgen/engine.py
+devgen/knowledge.py
 devgen/lambda_handler.py
 devgen/models.yaml
 devgen/providers.py
@@ -15,6 +16,7 @@ devgen.egg-info/dependency_links.txt
 devgen.egg-info/entry_points.txt
 devgen.egg-info/requires.txt
 devgen.egg-info/top_level.txt
+devgen/prompts/ask.txt
 devgen/prompts/diagnose.txt
 devgen/prompts/dockerfile.txt
 tests/test_engine.py
