@@ -24,6 +24,7 @@ tiers:
 command_tiers:
   dockerfile: fast
   diagnose: best
+  ask: best
 
 fallback_tier: fast
 

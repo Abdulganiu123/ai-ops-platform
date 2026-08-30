@@ -101,6 +101,10 @@ sends any log line matching `ERROR`, `Exception`, or `FATAL` to a Lambda, which
 diagnoses it and notifies via SNS — no human involved. It stays silent when the
 verdict is `NO FAILURE`, so a broad filter degrades to silence rather than noise.
 
+`enable_account_filter` is `true` by default — the filter is the point of the
+Lambda. It can be disabled temporarily with
+`terraform apply -var="enable_account_filter=false"` without committing a change.
+
 
 ## Documentation
 
@@ -109,6 +113,7 @@ verdict is `NO FAILURE`, so a broad filter degrades to silence rather than noise
 - [Incidents](docs/incidents/) — postmortems, which also seed the Phase 3 knowledge base
 - [Tool-limitations](docs/limitations.md) - Tool limitations
 - [Scope](docs/scope-boundary.md) - what it deliberately does not cover, and why
+- [Retrieval](docs/retrieval.md) — how incident search works, and when to move to a managed knowledge base
 
 ## Roadmap
 
@@ -116,6 +121,6 @@ verdict is `NO FAILURE`, so a broad filter degrades to silence rather than noise
 |---|---|---|
 | 1 | Governed generation and diagnosis | Done |
 | 2 | Event-triggered Lambda, local model for sensitive logs, VPC endpoint | Done |
-| 3 | RAG over runbooks and past incidents | |
+| 3 | RAG over runbooks and past incidents | Done |
 | 4 | MCP for live infrastructure state | |
 | 5 | Org-wide gateway: budgets, allowlists, central audit | |

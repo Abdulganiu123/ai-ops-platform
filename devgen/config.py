@@ -73,3 +73,11 @@ def _validate(config):
 
 
 _validate(_CONFIG)
+
+def knowledge_bucket():
+    """Bucket holding the incident index. Written by Terraform."""
+    import boto3
+
+    ssm = boto3.client("ssm")
+    param = ssm.get_parameter(Name="/devgen/knowledge-bucket")
+    return param["Parameter"]["Value"]

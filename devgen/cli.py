@@ -12,6 +12,7 @@ from devgen.engine import run
 from devgen.providers import get_provider
 import subprocess
 import sys
+from devgen import knowledge
 
 # Logs can be enormous and we pay per token. Keep the tail - errors live there.
 MAX_LOG_CHARS = 40000
@@ -134,3 +135,33 @@ def diagnose(pod, lines, tier, model, debug):
         raise click.ClickException("No logs given. Pipe logs in or use --pod.")
 
     click.echo(execute("diagnose", logs[-MAX_LOG_CHARS:], tier, model, debug))    
+
+
+@cli.command()
+@click.option("--docs", default="docs/incidents", show_default=True,
+              help="Folder of markdown files to index.")
+def index(docs):
+    """Build the incident index from your postmortems."""
+    count = knowledge.build_index(docs, config.knowledge_bucket())
+    click.echo(f"Indexed {count} sections from {docs}")
+
+
+@cli.command()
+@click.argument("question")
+@click.option("--sources", is_flag=True, help="Show which documents were used.")
+def ask(question, sources):
+    """Ask a question about past incidents."""
+    hits = knowledge.search(question, config.knowledge_bucket())
+
+    if not hits:
+        click.echo("No relevant past incidents found.")
+        return
+    
+    if sources:
+        for source, _, score in hits:
+            click.echo(f"  {score:.3f}  {source}")
+        click.echo()
+
+    context = "\n\n---\n\n".join(text for _, text, _ in hits)
+    prompt = f"Past incidents:\n\n{context}\n\nQuestion: {question}"
+    click.echo(execute("ask", prompt, None, None, False))
