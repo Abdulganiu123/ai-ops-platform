@@ -3,8 +3,36 @@ resource "aws_s3_bucket" "knowledge" {
   # checkov:skip=CKV_AWS_144: cross-region replication is DR beyond scope
   # checkov:skip=CKV_AWS_145: SSE-S3 enabled; contents are our own published postmortems
   # checkov:skip=CKV2_AWS_62: event notifications need an SNS/SQS/Lambda target
-  # checkov:skip=CKV2_AWS_61: the index is one overwritten object, no versions accumulate
   bucket = "${var.project_name}-knowledge-${local.account_id}"
+}
+
+# The index is derived data, but a bad rebuild overwrites a good index without
+# erroring. Versioning is the undo button.
+resource "aws_s3_bucket_versioning" "knowledge" {
+  bucket = aws_s3_bucket.knowledge.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Every reindex creates a version. Keep a week, then expire.
+resource "aws_s3_bucket_lifecycle_configuration" "knowledge" {
+  bucket = aws_s3_bucket.knowledge.id
+
+  rule {
+    id     = "expire-old-index-versions"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_expiration {
+      noncurrent_days = 7
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "knowledge" {
