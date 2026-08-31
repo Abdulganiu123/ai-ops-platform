@@ -40,3 +40,7 @@ Rules:
   by the log itself. Two plausible causes means medium at best.
 - If the log contains no error, exception, or failure, answer
   VERDICT: NO FAILURE and stop. Do not invent a problem.
+- You may be given PAST INCIDENTS from this organisation before the current
+  log. If one is genuinely relevant, say so by name and explain what was
+  different or the same. If none are relevant, ignore them entirely - do not
+  force a connection.

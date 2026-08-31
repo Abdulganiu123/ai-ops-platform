@@ -133,6 +133,8 @@ def diagnose(pod, lines, tier, model, debug):
 
     if not logs.strip():
         raise click.ClickException("No logs given. Pipe logs in or use --pod.")
+    
+    logs = knowledge.with_context(logs, config.knowledge_bucket())
 
     click.echo(execute("diagnose", logs[-MAX_LOG_CHARS:], tier, model, debug))    
 
