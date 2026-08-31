@@ -19,6 +19,7 @@ import boto3
 from devgen import config
 from devgen.engine import run
 from devgen.providers import get_provider
+from devgen import knowledge
 
 logs = boto3.client("logs")
 sns = boto3.client("sns")
@@ -61,6 +62,7 @@ def handler(event, context):
     if not text.strip():
         return {"status": "no_logs", "log_group": log_group}
 
+    text = knowledge.with_context(text, config.knowledge_bucket())
     provider_name, model_id = config.resolve("diagnose")
     provider = get_provider(provider_name, model_id)
     diagnosis = run("diagnose", provider, text)

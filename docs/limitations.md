@@ -78,4 +78,20 @@ alarm on restart count or error rate fires because a metric moved, independent
 of log wording, and the same function can then fetch and diagnose the relevant
 logs. Keyword matching is a reasonable first pass; it is not a monitoring
 strategy.
+
+## The automated path is CloudWatch-only
+
+`lambda_handler.py` fetches logs from CloudWatch. Organisations shipping logs
+to Elasticsearch, Datadog, or Splunk have no automated path — the subscription
+filter that triggers diagnosis is a CloudWatch feature.
+
+The CLI is unaffected. Anything that can print logs to stdout can pipe into
+`devgen diagnose`, which is the advantage of a pipeline tool over a service:
+no per-source connector is required.
+
+Extending the automated path would mean one fetcher per source behind a common
+interface, with the triggering event naming which to use — the same shape as
+the provider abstraction. Not built, because there is one log source here and
+no second one to test against.
+
 ---

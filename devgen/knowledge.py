@@ -72,3 +72,25 @@ def search(question, bucket, top_k=3, min_score=0.3):
     ]
     scored.sort(key=lambda item: item[2], reverse=True)
     return [hit for hit in scored[:top_k] if hit[2] >= min_score]
+
+def with_context(text, bucket, max_query_chars=2000):
+    """
+    Prepend relevant past incidents to a failure log.
+
+    Returns the text unchanged if nothing relevant is found, or if retrieval
+    fails - a missing index must not stop a diagnosis.
+    """
+    try:
+        hits = search(text[:max_query_chars], bucket)
+    except Exception:
+        return text
+
+    if not hits:
+        return text
+
+    past = "\n\n---\n\n".join(chunk for _, chunk, _ in hits)
+    return (
+        f"PAST INCIDENTS THAT MAY BE RELEVANT:\n\n{past}\n\n"
+        f"=====\n\n"
+        f"CURRENT FAILURE LOG:\n\n{text}"
+    )
